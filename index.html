@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WT - Workout Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Upload/Export Excel Reader (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+        <!-- LOCK SCREEN OVERLAY -->
+    <div id="lock-screen-overlay" class="lock-screen">
+        <div class="card lock-card">
+            <div class="lock-icon"></div>
+            <h2>App Locked</h2>
+            <p class="text-muted">Enter your access code to continue</p>
+            
+            <div class="form-group" style="margin-top: 18px;">
+                <input type="password" id="passcode-input" placeholder="Enter Code" maxlength="8" style="text-align: center; letter-spacing: 4px; font-size: 1.2rem;">
+            </div>
+            
+            <p id="lock-error-msg" style="color: #e57c35; font-size: 0.8rem; display: none; margin-top: -8px;">Incorrect passcode. Try again.</p>
+
+            <button class="btn btn-primary" onclick="unlockApp()" style="margin-top: 10px;">
+                UNLOCK APP
+            </button>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <h1>Workout Tracker</h1>
+    </header>
+
+    <main class="container">
+        <!-- PAGE 1: Workout View (Main Page) -->
+        <div id="workout-page" class="view-screen active">
+            <!-- HOME VIEW: Today's Focus Card (Acts as a button) -->
+            <div id="card-todays-focus" class="card todays-focus-card" onclick="showPage('today-workout-page')">
+                <div class="todays-focus-header">
+                    <h3>TODAY'S FOCUS</h3>
+                    <span class="view-arrow">→</span>
+                </div>
+                <div id="todays-focus-summary" class="todays-focus-summary">
+                    <!-- JS injects quick summary here -->
+                    <p class="text-muted">Loading today's schedule...</p>
+                </div>
+            </div>
+
+            <!-- Monthly Calendar Overview Card -->
+            <section class="card" style="margin-top: 18px;">
+                <div class="calendar-header">
+                    <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+                    <h2 id="calendar-month-title" style="margin: 0; border: none; padding: 0; font-size: 0.95rem;">Month Year</h2>
+                    <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+                </div>
+
+                <!-- Legend -->
+                <div class="calendar-legend">
+                    <span class="legend-item"><span class="dot dot-day"></span> Day Shift</span>
+                    <span class="legend-item"><span class="dot dot-night"></span> Night Shift</span>
+                    <span class="legend-item"><span class="dot dot-workout"></span> Workout</span>
+                </div>
+
+                <!-- Days Grid -->
+                <div class="calendar-grid-header">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                </div>
+                <div id="calendar-days-grid" class="calendar-grid">
+                    <!-- Dynamic days render here -->
+                </div>
+            </section>
+
+            <!-- Main Workout View Footer (Stacked Vertically) -->
+            <div class="action-footer" style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px;">
+                <button class="btn btn-primary" onclick="showPage('schedule-page')">
+                    Schedule
+                </button>
+                <button class="btn btn-primary" onclick="showPage('history-page')">
+                    Workout History
+                </button>
+                <!-- Lock App Button on Homepage -->
+                <button class="btn btn-primary" onclick="relockApp()" style="margin-top: 12px;">
+                    LOCK APP
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 2: Schedule Setup (Separate Page) -->
+        <div id="schedule-page" class="view-screen">
+            <section class="card">
+                <h2>Schedule Setup</h2>
+                
+                <div class="form-group">
+                    <label for="shift-date">Select Date:</label>
+                    <input type="date" id="shift-date">
+                </div>
+
+                <!-- 1. Day Status Selector -->
+                <div class="form-group">
+                    <label for="day-status">Day Status:</label>
+                    <select id="day-status" onchange="toggleScheduleOptions()">
+                        <option value="night-shift">Night Shift (5:00 PM - 5:30 AM)</option>
+                        <option value="day-shift">Day Shift (5:00 AM - 5:30 PM)</option>
+                        <option value="off-day">Off / Rest Day</option>
+                    </select>
+                </div>
+
+                <!-- 2. Custom Time Toggle Checkbox -->
+                <div class="form-group" id="custom-time-checkbox-group" style="flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="custom-time-toggle" onchange="toggleScheduleOptions()" style="width: auto;">
+                    <label for="custom-time-toggle" style="text-transform: none; font-weight: normal; cursor: pointer;">Customize Shift Times</label>
+                </div>
+
+                <!-- 3. Hidden Custom Time Inputs -->
+                <div id="time-inputs" class="time-range" style="display: none;">
+                    <div class="form-group">
+                        <label for="start-time">Start Time:</label>
+                        <input type="time" id="start-time" value="17:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="end-time">End Time:</label>
+                        <input type="time" id="end-time" value="05:30">
+                    </div>
+                </div>
+
+                <!-- 4. Workout Assignment Selector -->
+                <div class="form-group" id="workout-assignment-group">
+                    <label for="workout-type">Assigned Workout:</label>
+                    <select id="workout-type">
+                        <option value="none">None (Rest / Recovery)</option>
+                        <option value="heavy-glutes">Heavy Glutes (Lower)</option>
+                        <option value="upper-push">Upper Push (Chest / Shoulders)</option>
+                        <option value="glute-volume">Glute Volume & Unilateral (Lower)</option>
+                        <option value="upper-pull">Upper Pull & Vanity (Back / Posture)</option>
+                    </select>
+                    
+                    <!-- Previous Day Workout Alert Badge -->
+                    <div id="prev-workout-hint" class="text-muted" style="margin-top: 6px; font-size: 0.82rem; color: #d4af37; display: none;">
+                        <!-- Filled dynamically via app.js -->
+                    </div>
+                </div>
+
+                <button id="save-schedule-btn" class="btn btn-primary" onclick="saveShiftAndReturn()">
+                    Save Day to Schedule
+                </button>
+            </section>
+
+            <div class="action-footer">
+                <button class="btn btn-primary" onclick="showPage('workout-page')">
+                    Back to Workout
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 3: Workout History & Storage (Separate Page) -->
+        <div id="history-page" class="view-screen">
+            <section class="card">
+                <h2>Workout History & Data</h2>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span class="text-muted" style="font-size: 0.85rem;">Stored Days Count:</span>
+                    <strong id="stored-count" style="color: var(--accent-titanium, #d8cebe); font-size: 1rem;">0</strong>
+                </div>
+
+                <!-- Storage Inspection Box -->
+                <div class="form-group">
+                    <label>Storage Inspection:</label>
+                    <pre id="json-data-viewer">No data stored yet.</pre>
+                </div>
+
+                <!-- Data Actions -->
+                <div class="history-actions-card">
+                    <button id="btn-previous-workouts" class="btn-secondary">
+                        Previous Workouts
+                    </button>
+                    <button id="btn-export-excel" class="btn-secondary">
+                        Export as Excel
+                    </button>
+                    <button id="btn-clear-data" class="btn-danger">
+                        Clear All Saved Data
+                    </button>
+                </div>
+            </section>
+
+            <div class="action-footer">
+                <button class="btn btn-primary" onclick="showPage('workout-page')">
+                    Back to Workout
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 4: Dedicated Daily Workout & Logging Page -->
+        <div id="today-workout-page" class="view-screen hidden">
+            <!-- Header -->
+            <header class="page-header" style="margin-bottom: 20px;">
+                <h2 id="workout-page-title" style="margin: 0; font-size: 1.6rem;">Today's Workout</h2>
+                <span id="workout-page-date" class="text-muted" style="font-size: 0.85rem;">July 28, 2026</span>
+                <div id="workout-timer-display" style="display: none; color: #e5c185; font-weight: bold; margin-top: 5px;">00:00</div>
+            </header>
+
+            <!-- Workout Header / Meta Card -->
+            <section class="card workout-meta-card">
+                <div class="meta-row" style="margin-bottom: 8px;">
+                    <span class="meta-label" style="color: var(--text-secondary);">Focus Routine: </span>
+                    <strong id="meta-workout-type" class="meta-value" style="color: #e5c185;">—</strong>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label" style="color: var(--text-secondary);">Shift Status: </span>
+                    <span id="meta-shift-status" class="badge-shift">—</span>
+                </div>
+            </section>
+
+            <!-- Exercise Logger / Overview / Full View Container -->
+            <div id="exercise-logger-container" class="exercise-feed" style="margin-top: 18px;">
+                <!-- JS renders Preview, Interactive Mode, or Full View Mode here -->
+            </div>
+
+            <!-- Overview Action Buttons on Today's Workout Page -->
+            <div id="workout-overview-actions" class="action-footer" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                <button id="btn-start-workout" class="btn btn-primary" onclick="startActiveWorkout()">
+                    START INTERACTIVE WORKOUT
+                </button>
+                <button id="btn-full-workout-view" class="btn btn-primary" onclick="renderFullWorkoutView()">
+                    VIEW ALL EXERCISES (FULL PAGE)
+                </button>
+                <button class="btn btn-primary" onclick="saveTodayWorkoutProgress()">
+                    SAVE PROGRESS
+                </button>
+                <button class="btn btn-primary" onclick="showPage('workout-page')">
+                    BACK TO WORKOUT
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
