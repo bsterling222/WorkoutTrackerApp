@@ -75,9 +75,9 @@ const WORKOUT_DEFINITIONS = {
         exercises: [
             { id: 'ex1', name: 'Stomach Vacuums', reps: '15-20 sec', sets: 3, note: 'Mat or Standing' },
             { id: 'ex2', name: 'Pelvic Tucks', reps: '12-15', sets: 3, note: 'Roman Chair or Tower' },
-            { id: 'ex3', name: 'Hip Thrusts', reps: '8-10', sets: 4, note: 'Smith Machine' },
-            { id: 'ex4', name: 'Leg Press', reps: '10-12', sets: 4, note: '45 deg or Cable Leg Press' },
-            { id: 'ex5', name: 'Hip Abduction', reps: '15-20', sets: 4, note: 'Pin-Loaded Abductor' },
+            { id: 'ex3', name: 'Hip Abduction', reps: '20', sets: 2, note: 'Torso 30 deg forward, pause 1 s' },
+            { id: 'ex4', name: 'Hip Thrusts', reps: '8-10', sets: 4, note: 'Smith Machine' },
+            { id: 'ex5', name: 'Leg Press', reps: '10-12', sets: 4, note: '45 deg or Cable Leg Press' },
             { id: 'ex6', name: 'Incline Treadmill Walk', reps: '15 min', sets: 1, note: '10-12% incline @ 3.0 mph' }
         ]
     },
