@@ -163,6 +163,16 @@
                 <button class="btn btn-primary" onclick="exportScheduleToExcel()">
                     Export as Excel
                 </button>
+                
+                <!-- NEW: JSON Backup & Restore -->
+                <button class="btn btn-primary" onclick="exportDataJSON()" style="margin-top: 12px;">
+                    BACKUP DATA (JSON)
+                </button>
+                <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+                <button class="btn btn-action" onclick="document.getElementById('import-file').click()" style="margin-top: 12px; border-color: #e5c185; color: #e5c185;">
+                    RESTORE DATA
+                </button>
+
                 <button class="btn btn-primary" onclick="showPage('workout-page')" style="margin-top: 12px;">
                     Back to Workout
                 </button>
@@ -180,6 +190,16 @@
                 <span id="workout-page-date" class="text-muted" style="font-size: 0.85rem;">July 28, 2026</span>
                 <div id="workout-timer-display" style="display: none; color: #e5c185; font-weight: bold; margin-top: 5px;">00:00</div>
             </header>
+
+            <!-- FLOATING REST TIMER -->
+            <div id="rest-timer-overlay" class="rest-timer hidden">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Rest</span>
+                <span id="rest-time-display">01:30</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="timer-btn" onclick="adjustRestTime(30)">+30s</button>
+                    <button class="timer-btn" onclick="stopRestTimer()" style="background: rgba(10,8,7,0.4); color: #FAF6F0;">SKIP</button>
+                </div>
+            </div>
 
             <!-- Workout Header / Meta Card -->
             <section class="card workout-meta-card">

@@ -500,13 +500,58 @@ function finishWorkout() {
     showPage('workout-page');
 }
 
+// Global variables for the rest timer
+let restTimerInterval = null;
+let restSecondsRemaining = 0;
+
 function toggleSetCompletion(checkbox, setKey) {
     const setRow = checkbox.closest('.set-row');
     if (checkbox.checked) {
         setRow.style.opacity = '0.5';
+        startRestTimer(90); // Auto-starts a 90-second rest when you check a set
     } else {
         setRow.style.opacity = '1';
     }
+}
+
+function startRestTimer(seconds) {
+    restSecondsRemaining = seconds;
+    updateRestTimerUI();
+    const overlay = document.getElementById('rest-timer-overlay');
+    if (overlay) overlay.classList.add('active');
+
+    if (restTimerInterval) clearInterval(restTimerInterval);
+    
+    restTimerInterval = setInterval(() => {
+        restSecondsRemaining--;
+        if (restSecondsRemaining <= 0) {
+            stopRestTimer();
+        } else {
+            updateRestTimerUI();
+        }
+    }, 1000);
+}
+
+function updateRestTimerUI() {
+    const display = document.getElementById('rest-time-display');
+    if (display) {
+        const mins = Math.floor(restSecondsRemaining / 60);
+        const secs = restSecondsRemaining % 60;
+        display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
+function adjustRestTime(amount) {
+    restSecondsRemaining += amount;
+    if (restSecondsRemaining <= 0) stopRestTimer();
+    else updateRestTimerUI();
+}
+
+function stopRestTimer() {
+    if (restTimerInterval) clearInterval(restTimerInterval);
+    restTimerInterval = null;
+    const overlay = document.getElementById('rest-timer-overlay');
+    if (overlay) overlay.classList.remove('active');
 }
 
 function saveTodayWorkoutProgress() {
@@ -1440,4 +1485,58 @@ function removeColorTestMode() {
     renderCalendar();
     
     alert("Color Test Cleaned! Your real workouts were left untouched.");
+}
+
+// ==========================================================================
+// 10. JSON DATA BACKUP & RESTORE
+// ==========================================================================
+
+function exportDataJSON() {
+    const data = {
+        schedule: JSON.parse(localStorage.getItem('user_schedule') || '{}'),
+        routines: JSON.parse(localStorage.getItem('custom_routines') || '{}')
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Workout_Backup_${getLocalDateString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const imported = JSON.parse(e.target.result);
+            
+            // Failsafe check to ensure it's a valid backup file
+            if (imported.schedule && imported.routines) {
+                localStorage.setItem('user_schedule', JSON.stringify(imported.schedule));
+                localStorage.setItem('custom_routines', JSON.stringify(imported.routines));
+                
+                loadCustomRoutines();
+                renderCalendar();
+                updateTodaysFocus();
+                
+                alert("Data successfully restored from backup!");
+                showPage('workout-page');
+            } else {
+                alert("Error: Invalid backup file format.");
+            }
+        } catch (err) {
+            alert("Error parsing the backup file. Please ensure it is a valid JSON.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input so the same file can be uploaded again if needed
 }
