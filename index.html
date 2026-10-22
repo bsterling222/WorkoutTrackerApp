@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanctuary</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Upload/Export Excel Reader (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Sanctuary</h1>
+    </header>
+
+    <main class="container">
+        <!-- PAGE 1: Workout View (Main Page) -->
+        <div id="workout-page" class="view-screen active">
+            <!-- HOME VIEW: Today's Focus Card (Acts as a button) -->
+            <div id="card-todays-focus" class="card todays-focus-card" onclick="showPage('today-workout-page')">
+                <div class="todays-focus-header">
+                    <h3>TODAY'S FOCUS</h3>
+                    <span class="view-arrow">→</span>
+                </div>
+                <div id="todays-focus-summary" class="todays-focus-summary">
+                    <!-- JS injects quick summary here -->
+                    <p class="text-muted">Loading today's schedule...</p>
+                </div>
+            </div>
+
+            <!-- Monthly Calendar Overview Card -->
+            <section class="card" style="margin-top: 18px;">
+                <div class="calendar-header">
+                    <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+                    <h2 id="calendar-month-title" style="margin: 0; border: none; padding: 0; font-size: 0.95rem;">Month Year</h2>
+                    <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+                </div>
+
+                <!-- Days Grid -->
+                <div class="calendar-grid-header">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                </div>
+                <div id="calendar-days-grid" class="calendar-grid">
+                    <!-- Dynamic days render here -->
+                </div>
+            </section>
+
+            <!-- Main Workout View Footer (Stacked Vertically) -->
+            <div class="action-footer" style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px;">
+                <button class="btn btn-primary" onclick="showPage('schedule-page')">
+                    Schedule
+                </button>
+                <button class="btn btn-primary" onclick="showPage('history-page')">
+                    Workout History
+                </button>
+                <button class="btn btn-primary" onclick="showPage('routine-creator-page')">
+                    Routine Builder
+                </button>
+                <!-- TEMPORARY COLOR TEST BUTTONS (Hidden by default) -->
+                <button id="dev-test-btn" class="btn btn-action hidden" onclick="runColorTestMode()" style="margin-top: 12px; border-color: #e5c185; color: #e5c185;">
+                    RUN COLOR TEST MODE
+                </button>
+                <button id="dev-remove-test-btn" class="btn btn-action hidden" onclick="removeColorTestMode()" style="margin-top: 12px; border-color: #ff6b6b; color: #ff6b6b;">
+                    REMOVE COLOR TEST
+                </button>
+                <!-- Lock App Button on Homepage -->
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 48px; margin-bottom: 24px;">
+                <button onclick="promptAdminLogin()" style="background: transparent; border: none; box-shadow: none; color: rgba(255, 255, 255, 0.15); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; padding: 0;">
+                    ADMIN
+                </button>
+                <span style="color: rgba(255, 255, 255, 0.15); font-size: 0.55rem; letter-spacing: 2px; cursor: default;">
+                    v 2.0.1
+                </span>
+            </div>
+        </div>
+
+        <!-- PAGE 2: Schedule Setup (Separate Page) -->
+        <div id="schedule-page" class="view-screen">
+            <section class="card">
+                <h2>Schedule Setup</h2>
+                
+                <div class="form-group">
+                    <label for="shift-date">Select Date:</label>
+                    <input type="date" id="shift-date">
+                </div>
+
+                <!-- Workout Assignment Selector -->
+                <div class="form-group" id="workout-assignment-group">
+                    <label for="workout-type">Assigned Workout:</label>
+                    <select id="workout-type">
+                        <option value="none">None (Rest / Recovery)</option>
+                        <option value="glutes-lowercore">Glutes and LowerCore</option>
+                        <option value="upper-body">Upper Body V-Taper</option>
+                        <option value="glute-detail">Glute Shelf Detail, Hamstrings & Core</option>
+                    </select>
+                    
+                    <!-- Previous Day Workout Alert Badge -->
+                    <div id="prev-workout-hint" class="text-muted" style="margin-top: 6px; font-size: 0.82rem; color: #d4af37; display: none;">
+                        <!-- Filled dynamically via app.js -->
+                    </div>
+                </div>
+
+                <button id="save-schedule-btn" class="btn btn-primary" onclick="saveScheduledWorkout()">
+                    Save Day to Schedule
+                </button>
+            </section>
+
+            <div class="action-footer">
+                <button class="btn btn-primary" onclick="showPage('workout-page')">
+                    Back to Workout
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 3: Workout History -->
+        <div id="history-page" class="view-screen">
+            <section class="card" id="history-list-view">
+                <h2>Workout History</h2>
+                <div id="previous-workouts-container" class="history-feed">
+                    <!-- JS injects clickable past workouts here -->
+                </div>
+            </section>
+
+            <!-- Detailed Past Workout View (Hidden by default) -->
+            <section class="card hidden" id="history-detail-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(229,193,133,0.15); padding-bottom: 12px;">
+                    <h2 style="margin: 0; border: none; padding: 0;">Workout Details</h2>
+                    <span id="history-detail-date" style="color: #e5c185; font-weight: bold; font-size: 0.9rem;"></span>
+                </div>
+                
+                <div id="history-detail-content" style="margin-bottom: 20px;">
+                    <!-- JS injects the specific sets, reps, and weights here -->
+                </div>
+
+                <button class="btn btn-primary" onclick="closePastWorkoutDetail()">
+                    ← BACK TO HISTORY
+                </button>
+                <button class="btn btn-action" onclick="editSpecificWorkout()" style="margin-top: 12px;">
+                    EDIT THIS WORKOUT
+                </button>
+                <button class="btn btn-danger" onclick="deleteSpecificWorkout()" style="margin-top: 12px;">
+                    DELETE THIS WORKOUT
+                </button>
+            </section>
+
+            <div class="action-footer" id="history-action-footer">
+                <button class="btn btn-primary" onclick="exportScheduleToExcel()">
+                    Export as Excel
+                </button>
+                
+                <!-- NEW: JSON Backup & Restore -->
+                <button class="btn btn-primary" onclick="exportDataJSON()" style="margin-top: 12px;">
+                    BACKUP DATA (JSON)
+                </button>
+                <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+                <button class="btn btn-action" onclick="document.getElementById('import-file').click()" style="margin-top: 12px; border-color: #e5c185; color: #e5c185;">
+                    RESTORE DATA
+                </button>
+
+                <button class="btn btn-primary" onclick="showPage('workout-page')" style="margin-top: 12px;">
+                    Back to Workout
+                </button>
+                <button id="btn-clear-data" class="btn btn-danger" style="margin-top: 12px;">
+                    Clear All Saved Data
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGE 4: Dedicated Daily Workout & Logging Page -->
+        <div id="today-workout-page" class="view-screen hidden">
+            <!-- Header -->
+            <header class="page-header" style="margin-bottom: 20px;">
+                <h2 id="workout-page-title" style="margin: 0; font-size: 1.6rem;">Today's Workout</h2>
+                <span id="workout-page-date" class="text-muted" style="font-size: 0.85rem;">July 28, 2026</span>
+                <div id="workout-timer-display" style="display: none; color: #e5c185; font-weight: bold; margin-top: 5px;">00:00</div>
+            </header>
+
+            <!-- FLOATING REST TIMER -->
+            <div id="rest-timer-overlay" class="rest-timer hidden">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Rest</span>
+                <span id="rest-time-display">01:30</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="timer-btn" onclick="adjustRestTime(30)">+30s</button>
+                    <button class="timer-btn" onclick="stopRestTimer()" style="background: rgba(10,8,7,0.4); color: #FAF6F0;">SKIP</button>
+                </div>
+            </div>
+
+            <!-- Workout Header / Meta Card -->
+            <section class="card workout-meta-card">
+                <div class="meta-row" style="margin-bottom: 8px;">
+                    <span class="meta-label" style="color: var(--text-secondary);">Focus Routine: </span>
+                    <strong id="meta-workout-type" class="meta-value" style="color: #e5c185;">—</strong>
+                </div>
+            </section>
+
+            <!-- Exercise Logger / Overview / Full View Container -->
+            <div id="exercise-logger-container" class="exercise-feed" style="margin-top: 18px;">
+                <!-- JS renders Preview, Interactive Mode, or Full View Mode here -->
+            </div>
+
+            <!-- Overview Action Buttons on Today's Workout Page -->
+            <div id="workout-overview-actions" class="action-footer" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                <button id="btn-start-workout" class="btn btn-primary" onclick="startActiveWorkout()">
+                    START INTERACTIVE WORKOUT
+                </button>
+                <button id="btn-full-workout-view" class="btn btn-primary" onclick="renderFullWorkoutView()">
+                    VIEW ALL EXERCISES (FULL PAGE)
+                </button>
+                <button class="btn btn-primary" onclick="saveTodayWorkoutProgress()">
+                    SAVE PROGRESS
+                </button>
+                <button class="btn btn-primary" onclick="showPage('workout-page')">
+                    BACK TO WORKOUT
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ROUTINE CREATOR PAGE -->
+    <section id="routine-creator-page" class="view-screen hidden">
+        <h2 style="color: var(--accent-brass); margin-bottom: 20px; font-weight: 300;">Routine Builder</h2>
+
+        <!-- Saved Routines Manager -->
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0; color: #e5c185; font-size: 1rem; border-bottom: 1px solid rgba(229,193,133,0.2); padding-bottom: 6px;">Manage Saved Routines</h3>
+            <div id="routine-manager-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- JS will inject saved routines here -->
+            </div>
+        </div>
+        
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-bottom: 6px;">Routine Name</label>
+            <input type="text" id="new-routine-name" class="exercise-note-input" placeholder="e.g., Pull Day, Full Body...">
+            
+            <label style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 16px; margin-bottom: 6px;">Calendar Highlight Color</label>
+            <select id="new-routine-color" class="exercise-note-input" style="appearance: auto;">
+                <!-- Original Historic Colors -->
+                <option value="color-gold">Champagne Gold (Workout A)</option>
+                <option value="color-steel">Steel Blue (Workout B)</option>
+                <option value="color-copper">Warm Copper (Workout C)</option>
+                
+                <!-- Expanded Metallics -->
+                <option value="color-silver">Polished Silver</option>
+                <option value="color-rosegold">Rose Gold</option>
+                <option value="color-titanium">Dark Titanium</option>
+                <option value="color-amethyst">Metallic Amethyst</option>
+                <option value="color-bronze">Antique Bronze</option>
+                <option value="color-gunmetal">Gunmetal</option>
+                <option value="color-emerald">Raw Emerald</option>
+                <option value="color-sapphire">Deep Sapphire</option>
+            </select>
+        </div>
+
+        <h3 style="color: #e5c185; font-size: 1.1rem; margin-bottom: 12px;">Exercises</h3>
+        <div id="exercise-builder-container">
+            <!-- Javascript will inject exercise input rows here -->
+        </div>
+
+        <!-- NEW: Exercise Library Mix & Match -->
+        <div class="card" style="padding: 14px; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px dashed rgba(229,193,133,0.3);">
+            <label style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 8px;">Add From Previous Workouts</label>
+            <div style="display: flex; gap: 8px;">
+                <select id="exercise-library-select" class="exercise-note-input" style="margin-bottom: 0; appearance: auto; flex: 1;">
+                    <option value="">-- Select saved exercise --</option>
+                </select>
+                <button class="btn btn-action" style="width: auto; padding: 10px 16px; font-size: 0.8rem;" onclick="addExerciseFromLibrary()">
+                    + ADD
+                </button>
+            </div>
+        </div>
+
+        <button class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); margin-bottom: 30px;" onclick="addExerciseField()">
+            + ADD BLANK EXERCISE
+        </button>
+
+        <!-- Sticky Footer for Mobile -->
+        <div id="builder-action-footer" style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" onclick="saveCustomRoutine()">SAVE ROUTINE</button>
+            <button class="btn btn-primary" onclick="showPage('schedule-page')">BACK TO SCHEDULE</button>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
